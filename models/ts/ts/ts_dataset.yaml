@@ -1,0 +1,6 @@
+path: D:/Users/Janui/Documents/Studies/Machine Learning/Traffic-Sign-ML/models/ts/ts
+train: images/train
+val: images/val
+
+nc: 4  # Number of classes
+names: ["prohibitory", "danger", "mandatory", "other"]  # Updated class names
