@@ -12,10 +12,10 @@ from PIL import Image
 try:
     import cv2
 except ImportError:
-    st.write("⚠️ OpenCV not found. Installing OpenCV...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "opencv-python-headless==4.8.0.76"])
-    st.write("✅ OpenCV installed! Restarting app... Please wait.")
-    os.execv(sys.executable, [sys.executable, "-m", "streamlit", "run", sys.argv[0]])
+    print("⚠️ OpenCV not found. Installing OpenCV...")
+    subprocess.run(["pip", "install", "opencv-python-headless"])
+    print("✅ OpenCV installed! Restarting app... Please wait.")
+    os._exit(0)  # Forces Streamlit Cloud to restart
 
 # ================================
 # 📌 Ensure YOLOv5 is Installed
