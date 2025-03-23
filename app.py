@@ -14,7 +14,7 @@ try:
 except ImportError:
     st.write("⚠️ OpenCV not found. Installing OpenCV...")
     subprocess.run(["pip", "uninstall", "-y", "opencv-python", "opencv-python-headless"])
-    subprocess.run(["pip", "install", "opencv-python-headless==4.8.0.76"])
+    subprocess.run(["pip", "install", "--no-cache-dir", "opencv-python-headless==4.8.0.76"])
     import cv2
 
 # ================================
