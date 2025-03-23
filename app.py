@@ -1,13 +1,10 @@
 import os
 import sys
 import subprocess
-import torch
 import streamlit as st
-import numpy as np
-from PIL import Image
 
 # ================================
-# 📌 Ensure OpenCV is Installed
+# 📌 Check and Install OpenCV Before Running the App
 # ================================
 try:
     import cv2
@@ -15,7 +12,15 @@ except ImportError:
     st.write("⚠️ OpenCV not found. Installing OpenCV...")
     subprocess.run(["pip", "uninstall", "-y", "opencv-python", "opencv-python-headless"])
     subprocess.run(["pip", "install", "--no-cache-dir", "opencv-python-headless==4.8.0.76"])
-    import cv2
+    
+    # 🔄 Force Restart the App After Installing OpenCV
+    st.write("✅ OpenCV installed! Please **restart the app manually**.")
+    st.stop()  # Prevents Streamlit from executing the rest of the script
+
+# ✅ If OpenCV is already installed, continue running the app
+import torch
+import numpy as np
+from PIL import Image
 
 # ================================
 # 📌 Ensure YOLOv5 is Installed
@@ -34,13 +39,13 @@ from yolov5.utils.general import non_max_suppression, scale_coords
 from yolov5.utils.torch_utils import select_device
 
 # ================================
-# 📌 Convert Model to be Compatible with OpenCV 4
+# 📌 Convert Model for Compatibility
 # ================================
 MODEL_PATH = "best.pt"
 CONVERTED_MODEL_PATH = "best_converted.pt"
 
 if not os.path.exists(CONVERTED_MODEL_PATH):
-    st.write("🔄 Converting YOLO model for OpenCV 4 compatibility...")
+    st.write("🔄 Converting YOLO model for compatibility...")
     model = torch.load(MODEL_PATH, map_location=torch.device("cpu"))
     torch.save(model, CONVERTED_MODEL_PATH)
     st.write("✅ Model converted successfully!")
