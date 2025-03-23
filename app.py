@@ -17,7 +17,8 @@ if not os.path.exists("yolov5"):
 
 sys.path.append("yolov5")
 from yolov5.models.experimental import attempt_load
-from yolov5.utils.general import non_max_suppression, scale_coords
+from yolov5.utils.general import non_max_suppression
+from yolov5.utils.plots import output_to_target
 from yolov5.utils.torch_utils import select_device
 
 # =================================
