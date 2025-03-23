@@ -8,6 +8,15 @@ import numpy as np
 from PIL import Image
 
 # ==============================
+# 📌 Fix OpenCV "libGL.so.1" Error
+# ==============================
+if not os.path.exists("/usr/lib/libGL.so.1"):
+    print("⚠️ Installing missing system dependencies...")
+    subprocess.run(["sudo", "apt-get", "update"])
+    subprocess.run(["sudo", "apt-get", "install", "-y", "libgl1-mesa-glx"])
+    print("✅ System dependencies installed!")
+
+# ==============================
 # 📌 Ensure YOLOv5 is Installed
 # ==============================
 YOLO_DIR = "yolov5"
@@ -16,7 +25,7 @@ if not os.path.exists(YOLO_DIR):
     st.write("🔄 Cloning YOLOv5 repository...")
     subprocess.run(["git", "clone", "https://github.com/ultralytics/yolov5.git"])
     subprocess.run(["pip", "install", "-r", f"{YOLO_DIR}/requirements.txt"])
-    
+
 sys.path.append(YOLO_DIR)  # Ensure Python can find YOLOv5
 
 # ==============================
