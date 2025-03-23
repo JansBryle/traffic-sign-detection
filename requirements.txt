@@ -1,29 +1,10 @@
-# Core
-streamlit==1.43.2
 opencv-python-headless==4.11.0.86
-Pillow==11.1.0
-numpy==2.1.1
+streamlit==1.43.2
 torch==2.6.0
 torchvision==0.21.0
-gdown==5.1.0
-
-# Visualization
-matplotlib==3.10.1
-seaborn==0.13.2
-pydeck==0.9.1
-altair==5.5.0
-
-# Utils
-requests==2.32.3
-tqdm==4.67.1
-pandas==2.2.3
-PyYAML==6.0.2
-psutil==7.0.0
-
-# YOLOv5 + logging deps
+Pillow==11.1.0
+numpy==2.1.1
 ultralytics==8.3.94
-ultralytics-thop==2.0.14
-
-# Required system deps (just in case)
-protobuf==5.29.4
-typing_extensions==4.12.2
+gdown==5.1.0
+matplotlib==3.10.1
+pandas==2.2.3
