@@ -1,3 +1,10 @@
+import pkg_resources
+print([pkg.key for pkg in pkg_resources.working_set])  # List installed packages
+
+import cv2  # This will help us check if OpenCV is installed correctly
+
+
+
 import streamlit as st
 import torch
 import cv2
