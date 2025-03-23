@@ -11,3 +11,5 @@ tqdm
 seaborn
 requests
 ultralytics==8.0.203
+setuptools
+
