@@ -11,10 +11,10 @@ from PIL import Image
 # 📌 Fix OpenCV "libGL.so.1" Error
 # ==============================
 if not os.path.exists("/usr/lib/libGL.so.1"):
-    print("⚠️ Installing missing system dependencies...")
-    subprocess.run(["sudo", "apt-get", "update"])
-    subprocess.run(["sudo", "apt-get", "install", "-y", "libgl1-mesa-glx"])
-    print("✅ System dependencies installed!")
+    print("⚠️ libGL.so.1 not found. Installing required libraries...")
+    subprocess.run(["apt-get", "update"])
+    subprocess.run(["apt-get", "install", "-y", "libgl1"])
+    print("✅ libGL installed successfully!")
 
 # ==============================
 # 📌 Ensure YOLOv5 is Installed
