@@ -1,21 +1,23 @@
 import os
 import sys
 import subprocess
-import streamlit as st
 import torch
+import streamlit as st
+import cv2
 import numpy as np
 from PIL import Image
 
 # ==============================
-# 📌 Ensure Dependencies are Installed
+# 📌 Ensure Dependencies Are Installed
 # ==============================
+
 try:
     import cv2
-except ModuleNotFoundError:
-    st.warning("⚠️ OpenCV not found. Installing...")
-    subprocess.run(["pip", "install", "opencv-python-headless==4.11.0.86"])
-    st.success("✅ OpenCV installed! Restarting app...")
-    st.experimental_rerun()
+except ImportError:
+    st.warning("⚠️ OpenCV not found. Installing OpenCV...")
+    subprocess.run(["pip", "install", "opencv-python-headless"])
+    st.success("✅ OpenCV installed! Please restart the app manually.")
+    sys.exit()
 
 # ==============================
 # 📌 Ensure YOLOv5 is Installed
@@ -25,21 +27,28 @@ if not os.path.exists("yolov5"):
     subprocess.run(["git", "clone", "https://github.com/ultralytics/yolov5.git"])
     subprocess.run(["pip", "install", "-r", "yolov5/requirements.txt"])
 
-sys.path.append("./yolov5")
-from ultralytics import YOLO  # Import YOLO after installation
+sys.path.append("./yolov5")  # Ensure Python finds YOLOv5
+
+# Import YOLOv5 modules
+from yolov5.models.experimental import attempt_load
+from yolov5.utils.general import non_max_suppression, scale_coords
+from yolov5.utils.torch_utils import select_device
 
 # ==============================
-# 📌 Load the Model
+# 📌 Load YOLOv5 Model
 # ==============================
 @st.cache_resource
 def load_model():
-    model = YOLO("best.pt")
-    return model
+    model_path = "best.pt"  # Ensure this file is in your repo
+    device = select_device("cpu")  # Change to 'cuda' if GPU available
+    model = attempt_load(model_path, map_location=device)
+    model.eval()
+    return model, device
 
-model = load_model()
+model, device = load_model()
 
 # ==============================
-# 📌 Streamlit UI for Image Upload
+# 📌 Streamlit UI
 # ==============================
 st.title("🚦 Traffic Sign Detection App")
 st.write("Upload an image and detect traffic signs!")
@@ -47,18 +56,25 @@ st.write("Upload an image and detect traffic signs!")
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    # Convert image
+    # Convert image for OpenCV
     image = Image.open(uploaded_file)
-    image_np = np.array(image)
+    image = np.array(image)
 
-    # Run inference
-    results = model(image_np)
+    # Preprocess image for YOLO
+    img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    img = torch.from_numpy(img).to(device).float() / 255.0
+    img = img.permute(2, 0, 1).unsqueeze(0)
 
-    # Draw bounding boxes
-    for result in results.xyxy[0]:
-        x1, y1, x2, y2, conf, cls = map(int, result.tolist())
-        label = f"Class {cls}: {conf:.2f}"
-        cv2.rectangle(image_np, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(image_np, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    # Run YOLOv5 inference
+    with torch.no_grad():
+        pred = model(img)
+    pred = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5)[0]
 
-    st.image(image_np, caption="Detected Traffic Signs", use_column_width=True)
+    # Draw detections
+    for det in pred:
+        x1, y1, x2, y2, conf, cls = map(int, det.tolist())
+        cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        label = f"Class {int(cls)}: {conf:.2f}"
+        cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    st.image(image, caption="Detected Traffic Signs", use_column_width=True)
