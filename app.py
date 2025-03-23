@@ -10,7 +10,7 @@ import torch
 import cv2
 import numpy as np
 from PIL import Image
-from yolov5.models.experimental import attempt_load
+from ultralytics.yolo.v5.models.experimental import attempt_load
 from yolov5.utils.general import non_max_suppression, scale_coords
 from yolov5.utils.torch_utils import select_device
 
