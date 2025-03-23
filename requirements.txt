@@ -25,7 +25,6 @@ narwhals==1.31.0
 networkx==3.4.2
 numpy==2.1.1
 opencv-python-headless==4.11.0.86
-git+https://github.com/ultralytics/yolov5.git
 packaging==24.2
 pandas==2.2.3
 pillow==11.1.0
