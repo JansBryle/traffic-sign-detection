@@ -3,9 +3,19 @@ import sys
 import subprocess
 import torch
 import streamlit as st
-import cv2
 import numpy as np
 from PIL import Image
+
+# ================================
+# 📌 Ensure OpenCV is Installed
+# ================================
+try:
+    import cv2
+except ImportError:
+    st.write("⚠️ OpenCV not found. Installing OpenCV...")
+    subprocess.run(["pip", "uninstall", "-y", "opencv-python", "opencv-python-headless"])
+    subprocess.run(["pip", "install", "opencv-python-headless==4.8.0.76"])
+    import cv2
 
 # ================================
 # 📌 Ensure YOLOv5 is Installed
@@ -15,8 +25,8 @@ if not os.path.exists("yolov5"):
     subprocess.run(["git", "clone", "https://github.com/ultralytics/yolov5.git"])
     subprocess.run(["pip", "install", "-r", "yolov5/requirements.txt"])
 
-# Add YOLOv5 directory to Python path
-sys.path.append("./yolov5")  # Ensures Python can find YOLOv5
+# Add YOLOv5 to Python path
+sys.path.append("./yolov5")
 
 # Import YOLOv5 modules
 from yolov5.models.experimental import attempt_load
