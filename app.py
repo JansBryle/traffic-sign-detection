@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+sys.path.append(os.path.join(os.path.dirname(__file__), 'yolov5'))
 # Fix OpenCV libGL issue
 if not os.path.exists("/usr/lib/libGL.so.1"):
     st.warning("⚠️ libGL.so.1 not found. Installing...")
