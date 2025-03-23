@@ -7,74 +7,83 @@ import cv2
 import numpy as np
 from PIL import Image
 
-# ==============================
-# 📌 Ensure Dependencies Are Installed
-# ==============================
-
+# ============================
+# 🔧 Install OpenCV if Missing
+# ============================
 try:
-    import cv2
-except ImportError:
-    st.warning("⚠️ OpenCV not found. Installing OpenCV...")
-    subprocess.run(["pip", "install", "opencv-python-headless"])
-    st.success("✅ OpenCV installed! Please restart the app manually.")
-    sys.exit()
+    _ = cv2.__version__
+except Exception:
+    st.warning("⚠️ OpenCV not found. Installing...")
+    subprocess.run(["pip", "install", "opencv-python-headless==4.11.0.86"])
+    st.success("✅ OpenCV installed! Please restart the app.")
+    st.stop()
 
-# ==============================
-# 📌 Ensure YOLOv5 is Installed
-# ==============================
+# ============================
+# 🔽 Download best.pt from Google Drive if not present
+# ============================
+model_url = "https://drive.google.com/uc?id=1fSOVVSpN1fLu_Q_2LU_OOekUrfbFHz6R"
+model_path = "best.pt"
+
+if not os.path.exists(model_path):
+    st.write("⬇️ Downloading trained model from Google Drive...")
+    subprocess.run(["gdown", model_url, "-O", model_path], check=True)
+    st.success("✅ Model downloaded!")
+
+# ============================
+# 🔁 Add yolov5 path
+# ============================
 if not os.path.exists("yolov5"):
     st.write("🔄 Cloning YOLOv5 repository...")
     subprocess.run(["git", "clone", "https://github.com/ultralytics/yolov5.git"])
     subprocess.run(["pip", "install", "-r", "yolov5/requirements.txt"])
 
-sys.path.append("./yolov5")  # Ensure Python finds YOLOv5
-
-# Import YOLOv5 modules
+sys.path.append("yolov5")
 from yolov5.models.experimental import attempt_load
 from yolov5.utils.general import non_max_suppression, scale_coords
 from yolov5.utils.torch_utils import select_device
 
-# ==============================
-# 📌 Load YOLOv5 Model
-# ==============================
+# ============================
+# 🧠 Load Model
+# ============================
 @st.cache_resource
 def load_model():
-    model_path = "best.pt"  # Ensure this file is in your repo
-    device = select_device("cpu")  # Change to 'cuda' if GPU available
+    device = select_device("cuda" if torch.cuda.is_available() else "cpu")
     model = attempt_load(model_path, map_location=device)
     model.eval()
     return model, device
 
 model, device = load_model()
 
-# ==============================
-# 📌 Streamlit UI
-# ==============================
+# ============================
+# 🖼️ Streamlit UI
+# ============================
 st.title("🚦 Traffic Sign Detection App")
-st.write("Upload an image and detect traffic signs!")
+st.write("Upload an image to detect traffic signs!")
 
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    # Convert image for OpenCV
-    image = Image.open(uploaded_file)
-    image = np.array(image)
+    image = Image.open(uploaded_file).convert("RGB")
+    orig = np.array(image)
 
-    # Preprocess image for YOLO
-    img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    # Preprocess image
+    img = cv2.cvtColor(orig, cv2.COLOR_RGB2BGR)
     img = torch.from_numpy(img).to(device).float() / 255.0
     img = img.permute(2, 0, 1).unsqueeze(0)
 
-    # Run YOLOv5 inference
+    # Inference
     with torch.no_grad():
-        pred = model(img)
+        pred = model(img)[0]
     pred = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5)[0]
 
-    # Draw detections
-    for det in pred:
-        x1, y1, x2, y2, conf, cls = map(int, det.tolist())
-        cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        label = f"Class {int(cls)}: {conf:.2f}"
-        cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    # Draw boxes
+    if pred is not None:
+        pred[:, :4] = scale_coords(img.shape[2:], pred[:, :4], orig.shape).round()
+        for *xyxy, conf, cls in pred:
+            label = f"{int(cls)} {conf:.2f}"
+            xyxy = [int(x.item()) for x in xyxy]
+            cv2.rectangle(orig, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 255, 0), 2)
+            cv2.putText(orig, label, (xyxy[0], xyxy[1] - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    st.image(image, caption="Detected Traffic Signs", use_column_width=True)
+    st.image(orig, caption="📸 Detected Traffic Signs", use_column_width=True)

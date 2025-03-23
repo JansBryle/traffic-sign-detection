@@ -1,15 +1,11 @@
-git+https://github.com/ultralytics/yolov5.git
-opencv-python-headless==4.11.0.86
-torch==2.1.0
-torchvision==0.16.0
-numpy==2.1.1
-pandas==2.2.3
-Pillow==11.1.0
+# Runtime requirements
 streamlit==1.43.2
-matplotlib==3.10.1
-PyYAML==6.0.2
-scipy==1.15.2
-seaborn==0.13.2
-tqdm==4.67.1
-typing_extensions==4.12.2
-ultralytics==8.3.94
+opencv-python-headless==4.11.0.86
+torch==2.6.0
+torchvision==0.21.0
+numpy
+Pillow
+gdown
+
+# YOLOv5 dependency
+git+https://github.com/ultralytics/yolov5.git
