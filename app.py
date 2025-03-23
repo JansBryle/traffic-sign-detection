@@ -14,8 +14,9 @@ except ImportError:
     subprocess.run(["pip", "install", "--no-cache-dir", "opencv-python-headless==4.8.0.76"])
     
     # 🔄 Force Restart the App After Installing OpenCV
-    st.write("✅ OpenCV installed! Restarting app... Please wait.")
-    st.experimental_rerun()  # This forces Streamlit to refresh
+    st.write("✅ OpenCV installed! Please restart the app manually.")
+    st.stop()
+
 
 
 
