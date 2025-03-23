@@ -10,9 +10,8 @@ from PIL import Image
 # 📌 Ensure YOLOv5 Modules are Available
 # ==============================
 try:
-    from yolov5.models.experimental import attempt_load
-    from yolov5.utils.general import non_max_suppression
-    from yolov5.utils.torch_utils import select_device
+    from ultralytics import YOLO  # Changed import
+    from ultralytics.utils.torch_utils import select_device
 except ModuleNotFoundError:
     st.error("❌ YOLOv5 module not found! Ensure requirements are properly installed.")
     sys.exit()
@@ -22,11 +21,8 @@ except ModuleNotFoundError:
 # ==============================
 @st.cache_resource
 def load_model():
-    model_path = "best.pt"  # Path to trained weights
-    device = select_device("cpu")  # Force CPU usage
-    model = attempt_load(model_path, map_location=device)
-    model.eval()
-    return model, device
+    model = YOLO("best.pt")  # Use ultralytics YOLO interface
+    return model
 
 model, device = load_model()
 
