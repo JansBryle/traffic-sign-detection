@@ -1,54 +1,51 @@
 import os
 import subprocess
 import sys
-import torch
 import streamlit as st
+import torch
+import cv2
 import numpy as np
 from PIL import Image
 
-# ================================
-# 📌 Ensure OpenCV is Installed
-# ================================
-try:
-    import cv2
-except ImportError:
-    print("⚠️ OpenCV not found. Installing OpenCV...")
-    subprocess.run(["pip", "install", "opencv-python-headless"])
-    print("✅ OpenCV installed! Restarting app... Please wait.")
-    os._exit(0)  # Forces Streamlit Cloud to restart
-
-# ================================
+# ==============================
 # 📌 Ensure YOLOv5 is Installed
-# ================================
-if not os.path.exists("yolov5"):
+# ==============================
+YOLO_DIR = "yolov5"
+
+if not os.path.exists(YOLO_DIR):
     st.write("🔄 Cloning YOLOv5 repository...")
     subprocess.run(["git", "clone", "https://github.com/ultralytics/yolov5.git"])
-    subprocess.run(["pip", "install", "-r", "yolov5/requirements.txt"])
+    subprocess.run(["pip", "install", "-r", f"{YOLO_DIR}/requirements.txt"])
+    
+sys.path.append(YOLO_DIR)  # Ensure Python can find YOLOv5
 
-# Add YOLOv5 directory to Python path
-sys.path.append("./yolov5")
+# ==============================
+# 📌 Import YOLOv5 Modules
+# ==============================
+try:
+    from yolov5.models.experimental import attempt_load
+    from yolov5.utils.general import non_max_suppression, scale_coords
+    from yolov5.utils.torch_utils import select_device
+except ModuleNotFoundError:
+    st.error("❌ YOLOv5 module not found! Try restarting the app after installation.")
+    sys.exit()
 
-# Import YOLOv5 modules
-from yolov5.models.experimental import attempt_load
-from yolov5.utils.general import non_max_suppression, scale_coords
-from yolov5.utils.torch_utils import select_device
-
-# ================================
-# 📌 Load YOLOv5 Model
-# ================================
+# ==============================
+# 📌 Load the YOLOv5 Model
+# ==============================
 @st.cache_resource
 def load_model():
     model_path = "best.pt"  # Path to trained weights
-    device = select_device("0" if torch.cuda.is_available() else "cpu")
+    device = select_device("")
     model = attempt_load(model_path, map_location=device)
     model.eval()
     return model, device
 
 model, device = load_model()
 
-# ================================
-# 📌 Streamlit UI
-# ================================
+# ==============================
+# 📌 Streamlit UI for Image Upload
+# ==============================
 st.title("🚦 Traffic Sign Detection App")
 st.write("Upload an image and detect traffic signs!")
 
