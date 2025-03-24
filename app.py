@@ -42,25 +42,37 @@ if uploaded_file:
     original_image = image_np.copy()
 
     # ✅ Preprocess
-    img_resized = cv2.resize(image_np, (640, 640))
-    img_resized = cv2.cvtColor(img_resized, cv2.COLOR_RGB2BGR)
-    img_tensor = torch.from_numpy(img_resized).to(device).float() / 255.0
-    img_tensor = img_tensor.permute(2, 0, 1).unsqueeze(0)
+    original_h, original_w = image_np.shape[:2]
 
-    # ✅ Inference
+    # Resize image to 640x640
+    resized_image = cv2.resize(image_np, (640, 640))
+    img = cv2.cvtColor(resized_image, cv2.COLOR_RGB2BGR)
+    img = torch.from_numpy(img).to(device).float() / 255.0
+    img = img.permute(2, 0, 1).unsqueeze(0)
+
+    # Inference
     with torch.no_grad():
-        pred = model(img_tensor, augment=False)[0]
-        detections = non_max_suppression(pred, conf_thres=0.25, iou_thres=0.45)[0]
+    pred = model(img, augment=False)[0]
+    detections = non_max_suppression(pred, conf_thres=0.25, iou_thres=0.45)[0]
+
 
     # ✅ Draw Detections (scale boxes to original size)
+    # ✅ Draw Detections
     if detections is not None and len(detections):
-        detections = detections.cpu()
-        detections[:, :4] = scale_coords(img_tensor.shape[2:], detections[:, :4], original_image.shape).round()
+        detections = detections.cpu().numpy()
         for *box, conf, cls in detections:
             x1, y1, x2, y2 = map(int, box)
-            cv2.rectangle(original_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            label = f"{int(cls)} {conf:.2f}"
-            cv2.putText(original_image, label, (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+        # Rescale boxes from 640x640 to original image size
+        x1 = int(x1 * original_w / 640)
+        x2 = int(x2 * original_w / 640)
+        y1 = int(y1 * original_h / 640)
+        y2 = int(y2 * original_h / 640)
+
+        label = f"ID {int(cls)} {conf:.2f}"
+        cv2.rectangle(image_np, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(image_np, label, (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
 
     st.image(original_image, caption="📸 Detected Traffic Signs", use_container_width=True)
