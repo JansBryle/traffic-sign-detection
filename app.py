@@ -25,7 +25,7 @@ from yolov5.utils.torch_utils import select_device
 @st.cache_resource
 def load_model():
     device = select_device("")
-    model = attempt_load("yolov5/runs/train/exp/weights/best.pt", device=device)
+    model = attempt_load("yolov5/runs/train/exp2/weights/best.pt", device=device)
     model.eval()
     return model, device
 
