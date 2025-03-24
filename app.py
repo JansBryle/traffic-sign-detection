@@ -21,11 +21,14 @@ from yolov5.models.experimental import attempt_load
 from yolov5.utils.general import non_max_suppression
 from yolov5.utils.torch_utils import select_device
 
+# ✅ Optional: Label names if known
+CLASS_NAMES = ["prohibitory", "danger", "mandatory", "other"]
+
 # ✅ Load YOLOv5 Model
 @st.cache_resource
 def load_model():
     device = select_device("")
-    model = attempt_load("yolov5/runs/train/exp2/weights/best.pt", device=device)
+    model = attempt_load("yolov5/runs/train/exp2/weights/best.pt", map_location=device)
     model.eval()
     return model, device
 
@@ -49,15 +52,20 @@ if uploaded_file:
     # ✅ Inference
     with torch.no_grad():
         pred = model(img, augment=False)[0]
-        detections = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5)[0]
+        detections = non_max_suppression(pred, conf_thres=0.25, iou_thres=0.45)[0]
 
     # ✅ Draw Detections
     if detections is not None and len(detections):
-        detections = detections.cpu().numpy().astype(int)
+        detections = detections.cpu().numpy()
         for *box, conf, cls in detections:
-            x1, y1, x2, y2 = box
+            x1, y1, x2, y2 = map(int, box)
+            label = CLASS_NAMES[int(cls)] if int(cls) < len(CLASS_NAMES) else f"Class {int(cls)}"
             cv2.rectangle(image_np, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image_np, f"ID {int(cls)} {conf:.2f}", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            cv2.putText(image_np, f"{label} {conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-    st.image(image_np, caption="📸 Detected Traffic Signs", use_column_width=True)
+        st.sidebar.success(f"✅ {len(detections)} traffic signs detected.")
+    else:
+        st.sidebar.warning("⚠️ No traffic signs detected.")
+
+    st.image(image_np, caption="📸 Detected Traffic Signs", use_container_width=True)
