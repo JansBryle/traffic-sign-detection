@@ -16,16 +16,16 @@ if not os.path.exists("yolov5"):
 # ✅ Add yolov5 to Python path
 sys.path.append("yolov5")
 
-# ✅ YOLOv5 Imports (FIXED: removed scale_coords)
+# ✅ YOLOv5 Imports
 from yolov5.models.experimental import attempt_load
-from yolov5.utils.general import non_max_suppression
+from yolov5.utils.general import non_max_suppression, scale_coords
 from yolov5.utils.torch_utils import select_device
 
 # ✅ Load YOLOv5 Model
 @st.cache_resource
 def load_model():
     device = select_device("")
-    model = attempt_load("yolov5/runs/train/exp2/weights/best.pt", device=device)
+    model = attempt_load("yolov5/runs/train/exp/weights/best.pt", device=device)  # <-- update path if needed
     model.eval()
     return model, device
 
@@ -39,27 +39,28 @@ uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     image_np = np.array(image)
+    original_image = image_np.copy()
 
     # ✅ Preprocess
-    img = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
-    img = cv2.resize(img, (640, 640))
-    img = torch.from_numpy(img).to(device).float() / 255.0
-    img = img.permute(2, 0, 1).unsqueeze(0)
+    img_resized = cv2.resize(image_np, (640, 640))
+    img_resized = cv2.cvtColor(img_resized, cv2.COLOR_RGB2BGR)
+    img_tensor = torch.from_numpy(img_resized).to(device).float() / 255.0
+    img_tensor = img_tensor.permute(2, 0, 1).unsqueeze(0)
 
     # ✅ Inference
     with torch.no_grad():
-        pred = model(img, augment=False)[0]
+        pred = model(img_tensor, augment=False)[0]
         detections = non_max_suppression(pred, conf_thres=0.25, iou_thres=0.45)[0]
 
-    # ✅ Draw Detections
+    # ✅ Draw Detections (scale boxes to original size)
     if detections is not None and len(detections):
-        detections = detections.cpu().numpy().astype(int)
+        detections = detections.cpu()
+        detections[:, :4] = scale_coords(img_tensor.shape[2:], detections[:, :4], original_image.shape).round()
         for *box, conf, cls in detections:
-            x1, y1, x2, y2 = box
-            label = f"ID {int(cls)} {conf:.2f}"
-            cv2.rectangle(image_np, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image_np, label, (x1, y1 - 10),
+            x1, y1, x2, y2 = map(int, box)
+            cv2.rectangle(original_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            label = f"{int(cls)} {conf:.2f}"
+            cv2.putText(original_image, label, (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-    # ✅ Updated: avoid deprecated `use_column_width`
-    st.image(image_np, caption="📸 Detected Traffic Signs", use_container_width=True)
+    st.image(original_image, caption="📸 Detected Traffic Signs", use_container_width=True)
